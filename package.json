@@ -1,0 +1,26 @@
+{
+  "name": "@minsungje/react-hooks",
+  "version": "0.0.1",
+  "description": "A simple hook package implemented in React and Typescript. Made by MinSungJe.",
+  "keywords": [
+    "react",
+    "typescript",
+    "hooks",
+    "react-hook"
+  ],
+  "homepage": "https://github.com/MinSungJe/MinSungJe-React-Hooks#readme",
+  "bugs": {
+    "url": "https://github.com/MinSungJe/MinSungJe-React-Hooks/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MinSungJe/MinSungJe-React-Hooks.git"
+  },
+  "license": "MIT",
+  "author": "MinSungJe <minje813@naver.com>",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
