@@ -76,9 +76,8 @@ const usePolling = ({
       return result;
     } catch (error) {
       retryReference.current += 1;
-      if (retryReference.current > retryCount) {
-        stop();
-      }
+      if (retryReference.current > retryCount) stop();
+
       throw error;
     }
   }, [poll, retryCount, stop]);
@@ -91,9 +90,7 @@ const usePolling = ({
         isRunningReference.current = false;
         clearTimer();
       } else {
-        if (!isUserStoppedRef.current) {
-          start();
-        }
+        if (!isUserStoppedRef.current) start();
       }
     };
 
