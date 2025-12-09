@@ -5,6 +5,7 @@ interface UsePollingProperties {
   interval?: number;
   pauseWhenHidden?: boolean;
   autoStart?: boolean;
+  retryCount?: number;
 }
 
 const usePolling = ({
@@ -12,10 +13,12 @@ const usePolling = ({
   interval = 3000,
   pauseWhenHidden = true,
   autoStart = true,
+  retryCount = 3,
 }: UsePollingProperties) => {
   const timerReference = useRef<number | null>(null);
   const apiReference = useRef(apiFunction);
   const isRunningReference = useRef(false);
+  const retryReference = useRef(0);
 
   apiReference.current = apiFunction;
 
@@ -31,15 +34,27 @@ const usePolling = ({
   const poll = useCallback(async () => {
     if (!isRunningReference.current) return;
 
-    await apiReference.current();
+    try {
+      await apiReference.current();
+      retryReference.current = 0;
+    } catch (error) {
+      retryReference.current += 1;
+
+      if (retryReference.current > retryCount) {
+        isRunningReference.current = false;
+        clearTimer();
+        return;
+      }
+    }
 
     if (isRunningReference.current) {
       scheduleNext(poll);
     }
-  }, [interval]);
+  }, [interval, retryCount]);
 
   const start = useCallback(() => {
     if (isRunningReference.current) return;
+    retryReference.current = 0;
     isRunningReference.current = true;
     poll();
   }, [poll]);
@@ -50,12 +65,19 @@ const usePolling = ({
   }, []);
 
   const call = useCallback(async () => {
-    const result = await apiReference.current();
-    if (isRunningReference.current) {
-      scheduleNext(poll);
+    try {
+      const result = await apiReference.current();
+      retryReference.current = 0;
+      if (isRunningReference.current) scheduleNext(poll);
+      return result;
+    } catch (error) {
+      retryReference.current += 1;
+      if (retryReference.current > retryCount) {
+        stop();
+      }
+      throw error;
     }
-    return result;
-  }, [poll]);
+  }, [poll, retryCount, stop]);
 
   useEffect(() => {
     if (!pauseWhenHidden) return;
@@ -79,7 +101,11 @@ const usePolling = ({
     return () => stop();
   }, [autoStart, start, stop]);
 
-  return { start, stop, runNow: call };
+  return {
+    start,
+    stop,
+    runNow: call,
+  };
 };
 
 export default usePolling;
