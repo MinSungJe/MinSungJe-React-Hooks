@@ -34,7 +34,7 @@ const usePolling = ({ apiFunction, interval = 3000 }: UsePollingProperties) => {
     return result;
   };
 
-  return call;
+  return { runNow: call };
 };
 
 export default usePolling;
