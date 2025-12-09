@@ -1,1 +1,1 @@
-export { default as usePolling } from './usePolling/usePolling';
+export { default as usePolling } from './hooks/usePolling/usePolling';
