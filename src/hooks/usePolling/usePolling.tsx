@@ -19,6 +19,7 @@ const usePolling = ({
   const apiReference = useRef(apiFunction);
   const isRunningReference = useRef(false);
   const retryReference = useRef(0);
+  const isUserStoppedRef = useRef(false);
 
   apiReference.current = apiFunction;
 
@@ -54,12 +55,15 @@ const usePolling = ({
 
   const start = useCallback(() => {
     if (isRunningReference.current) return;
+
+    isUserStoppedRef.current = false;
     retryReference.current = 0;
     isRunningReference.current = true;
     poll();
   }, [poll]);
 
   const stop = useCallback(() => {
+    isUserStoppedRef.current = true;
     isRunningReference.current = false;
     clearTimer();
   }, []);
@@ -84,9 +88,12 @@ const usePolling = ({
 
     const handleVisibility = () => {
       if (document.hidden) {
-        stop();
+        isRunningReference.current = false;
+        clearTimer();
       } else {
-        start();
+        if (!isUserStoppedRef.current) {
+          start();
+        }
       }
     };
 
