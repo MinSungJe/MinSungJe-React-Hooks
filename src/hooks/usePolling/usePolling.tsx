@@ -4,15 +4,18 @@ interface UsePollingProperties {
   apiFunction: () => unknown;
   interval?: number;
   pauseWhenHidden?: boolean;
+  autoStart?: boolean;
 }
 
 const usePolling = ({
   apiFunction,
   interval = 3000,
   pauseWhenHidden = true,
+  autoStart = true,
 }: UsePollingProperties) => {
   const timerReference = useRef<number | null>(null);
   const apiReference = useRef(apiFunction);
+  const isRunningReference = useRef(false);
 
   apiReference.current = apiFunction;
 
@@ -20,24 +23,48 @@ const usePolling = ({
     if (timerReference.current) clearTimeout(timerReference.current);
   };
 
-  const resetTimer = (function_: (...properties: never) => unknown) => {
+  const scheduleNext = (fn: () => void) => {
     clearTimer();
-    timerReference.current = setTimeout(function_, interval);
+    timerReference.current = setTimeout(fn, interval);
   };
 
   const poll = useCallback(async () => {
+    if (!isRunningReference.current) return;
+
     await apiReference.current();
-    resetTimer(poll);
+
+    if (isRunningReference.current) {
+      scheduleNext(poll);
+    }
   }, [interval]);
+
+  const start = useCallback(() => {
+    if (isRunningReference.current) return;
+    isRunningReference.current = true;
+    poll();
+  }, [poll]);
+
+  const stop = useCallback(() => {
+    isRunningReference.current = false;
+    clearTimer();
+  }, []);
+
+  const call = useCallback(async () => {
+    const result = await apiReference.current();
+    if (isRunningReference.current) {
+      scheduleNext(poll);
+    }
+    return result;
+  }, [poll]);
 
   useEffect(() => {
     if (!pauseWhenHidden) return;
 
     const handleVisibility = () => {
       if (document.hidden) {
-        clearTimer();
+        stop();
       } else {
-        poll();
+        start();
       }
     };
 
@@ -45,20 +72,14 @@ const usePolling = ({
     return () => {
       document.removeEventListener('visibilitychange', handleVisibility);
     };
-  }, [pauseWhenHidden, poll]);
+  }, [pauseWhenHidden, start, stop]);
 
   useEffect(() => {
-    poll();
-    return () => clearTimer();
-  }, [poll]);
+    if (autoStart) start();
+    return () => stop();
+  }, [autoStart, start, stop]);
 
-  const call = async () => {
-    const result = await apiReference.current();
-    resetTimer(poll);
-    return result;
-  };
-
-  return { runNow: call };
+  return { start, stop, runNow: call };
 };
 
 export default usePolling;
