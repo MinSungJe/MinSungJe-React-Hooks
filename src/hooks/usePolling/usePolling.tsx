@@ -68,7 +68,7 @@ const usePolling = ({
     clearTimer();
   }, []);
 
-  const call = useCallback(async () => {
+  const runNow = useCallback(async () => {
     try {
       const result = await apiReference.current();
       retryReference.current = 0;
@@ -111,7 +111,7 @@ const usePolling = ({
   return {
     start,
     stop,
-    runNow: call,
+    runNow,
   };
 };
 
