@@ -1,0 +1,74 @@
+name: Publish @minsungje/react-hooks
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org/
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Detect Changes
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            package:
+              - "src/**"
+              - "package.json"
+
+      - name: Bump version
+        if: steps.changes.outputs.package == 'true'
+        run: |
+          newVersion=$(npm version patch)
+          echo "version=$newVersion" >> $GITHUB_ENV
+
+      - name: Push version commit and tag
+        if: steps.changes.outputs.package == 'true'
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          git push origin HEAD:main --follow-tags
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build package
+        if: steps.changes.outputs.package == 'true'
+        run: npm run build
+
+      - name: Publish to npm
+        if: steps.changes.outputs.package == 'true'
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub Release
+        if: steps.changes.outputs.package == 'true'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ env.version }}
+          name: 'Release ${{ env.version }}'
+          body: |
+            Automated release for version ${{ env.version }}.
+            - src 변경 감지됨 → 자동 배포됨
+            - React Hooks 패키지 업데이트
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
