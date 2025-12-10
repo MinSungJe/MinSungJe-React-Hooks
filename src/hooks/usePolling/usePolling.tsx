@@ -21,7 +21,9 @@ const usePolling = ({
   const retryReference = useRef(0);
   const isUserStoppedRef = useRef(false);
 
-  apiReference.current = apiFunction;
+  useEffect(() => {
+    apiReference.current = apiFunction;
+  }, [apiFunction]);
 
   const clearTimer = () => {
     if (timerReference.current) clearTimeout(timerReference.current);
