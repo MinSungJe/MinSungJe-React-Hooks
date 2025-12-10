@@ -8,3 +8,7 @@ tsconfig.json
 
 # GIT
 .git
+
+# config
+.github
+.vscode
