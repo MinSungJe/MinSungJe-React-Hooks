@@ -11,7 +11,17 @@ const createStore = <T>(initialState: T): Store<T> => {
   const getState = () => state;
 
   const setState = (nextState: T | ((previous: T) => T)) => {
-    state = typeof nextState === 'function' ? (nextState as (previous: T) => T)(state) : nextState;
+    const previousState = state;
+
+    const resolvedState =
+      typeof nextState === 'function'
+        ? (nextState as (previous: T) => T)(previousState)
+        : nextState;
+
+    if (Object.is(previousState, resolvedState)) return;
+
+    state = resolvedState;
+
     for (const callback of callbacks) callback();
   };
 
