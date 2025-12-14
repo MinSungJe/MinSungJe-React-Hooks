@@ -1,6 +1,6 @@
 {
   "name": "@minsungje/react-hooks",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "A simple hook package implemented in React and Typescript. Made by MinSungJe.",
   "keywords": [
     "react",
