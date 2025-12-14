@@ -61,9 +61,12 @@ jobs:
         if: steps.changes.outputs.package == 'true'
         run: npm run build
 
+      - name: Login to npm (OIDC)
+        run: npm login --auth-type=oidc
+
       - name: Publish to npm
         if: steps.changes.outputs.package == 'true'
-        run: npm publish --access public
+        run: npm publish --access public --provenance
 
       - name: Create GitHub Release
         if: steps.changes.outputs.package == 'true'
